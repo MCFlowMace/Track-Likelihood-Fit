@@ -33,7 +33,7 @@ def get_likelihood_vals(spec_in, t, f, track):
     intensity_0 = track.get_signal(t, f)
     probabilities = expon.pdf(spec_in.spec, loc=intensity_0)
     
-    return np.log(np.maximum(probabilities, 1e-100))#1e-100))
+    return np.log(np.maximum(probabilities, 1e-30))#1e-100))
 
 def get_likelihood(spec_in, t, f, track):
     
@@ -45,25 +45,28 @@ def plot_hypothesis(spec_in, t, f, track):
 	print('Track hypothesis')
 	spectrogram_hypothesis.plot()
 	
-	spec_out = -get_likelihood_vals(spec_in, t, f, track)
+	spec_out = get_likelihood_vals(spec_in, t, f, track)
 	
 	print('Likelihood values')
 	sp.plot_spectrogram(spec_out, t, f)
     
 def scan_likelihood(scan_vals, likelihood_function):
-    lh = []
-    for val in scan_vals:
-        lh.append(likelihood_function(val))
+    
+    lh = np.empty(shape=scan_vals.shape)
+    for i, val in enumerate(scan_vals):
+        lh[i] = likelihood_function(val)
     
     return lh
     
 def scan_likelihood_2d(scan_vals_x, scan_vals_y, likelihood_function):
-    lh = []
-    for x in scan_vals_x:
-        lhx = []
-        for y in scan_vals_y:
-            lhx.append(likelihood_function(x,y))
-        lh.append(lhx)
+    #lh = []
+    lh = np.empty(shape=[scan_vals_x.shape[0], scan_vals_y.shape[0]])
+    for i, x in enumerate(scan_vals_x):
+     #   lhx = []
+        for j, y in enumerate(scan_vals_y):
+            #lhx.append(likelihood_function(x,y))
+            lh[i,j] = likelihood_function(x,y)
+      #  lh.append(lhx)
     
     return lh 
     
@@ -79,11 +82,11 @@ def plot_likelihood(scan_vals, lh_res, x_real, label, name):
     plt.show()  
     
 def plot_likelihood_2d(scan_vals_x, scan_vals_y, lh_np, x_real, y_real, 
-                                x_label, y_label):
+                                x_label, y_label, min_ind, name):
 	
     fig, ax = plt.subplots()
     extent = [scan_vals_x[0],scan_vals_x[-1],scan_vals_y[0],scan_vals_y[-1]]
-    aspect = get_aspect(extent, lh_np.shape)
+    aspect = sp.get_aspect(extent, lh_np.shape)
     im=ax.imshow(lh_np, origin='lower', extent= extent, aspect=aspect)
     ax.plot(x_real, y_real, marker='x', c='r')
     ax.plot(scan_vals_x[min_ind[0]], scan_vals_y[min_ind[1]], marker='v', c='g')
@@ -97,7 +100,7 @@ def plot_likelihood_2d(scan_vals_x, scan_vals_y, lh_np, x_real, y_real,
 def scan_and_plot(lh_func, x_min, x_max, dx, x_real, label, name):
     scan_vals = np.arange(x_min, x_max, dx)
     start = time.time()
-    lh_res = np.array(scan_likelihood(scan_vals, lh_func))
+    lh_res = scan_likelihood(scan_vals, lh_func)
     end = time.time()
     
     print("Scanning time: ", end-start)
@@ -114,7 +117,7 @@ def scan_and_plot_2d(lh_func, x_min, x_max, dx, x_real, y_min, y_max, dy, y_real
     scan_vals_y = np.arange(y_min, y_max, dy)
     
     start = time.time()
-    lh_np = np.array(scan_likelihood_2d(scan_vals_x, scan_vals_y, lh_func))
+    lh_np = scan_likelihood_2d(scan_vals_x, scan_vals_y, lh_func)
     end = time.time()
     
     print("Scanning time: ", end-start)
@@ -124,7 +127,7 @@ def scan_and_plot_2d(lh_func, x_min, x_max, dx, x_real, y_min, y_max, dy, y_real
     print("True vals: ", x_real, y_real, "Found minimum: ", scan_vals_x[min_ind[0]], scan_vals_y[min_ind[1]])
     
     plot_likelihood_2d(scan_vals_x, scan_vals_y, lh_np, x_real, y_real, 
-                                                            x_label, y_label)
+                                            x_label, y_label, min_ind, name)
 
 def main(args):
     return 0

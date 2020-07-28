@@ -25,6 +25,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from . import track
+from scipy.stats import expon
 
 def get_aspect(extent, shape):
     
@@ -48,6 +49,24 @@ def plot_spectrogram(spec, t, f, name='spectrogram', save=False):
     
     ax.set_xlabel('t')
     ax.set_ylabel('f')
+
+    if save:
+        plt.savefig(name+'.png', dpi=1200)
+
+    plt.show()
+    
+def plot_power_distribution(spec, name='power_dist', bins=50, save=False):
+	
+    fig, ax = plt.subplots()    
+    
+    flat_spec = spec.flatten()
+    maximum = np.max(flat_spec)
+    
+    ax.hist(flat_spec, bins=bins, density=True)
+    #ax.plot(expon.pdf(np.linspace(0,maximum, 1000)))
+    
+    ax.set_xlabel('power')
+    ax.set_ylabel('count')
 
     if save:
         plt.savefig(name+'.png', dpi=1200)
@@ -123,6 +142,15 @@ class Spectrogram:
     def plot(self, save=False):
         
         plot_spectrogram(self.spec, self.t, self.f, self.name, save)
+        
+    def normalize(self):
+		
+        mean = np.mean(self.spec)
+        self.spec /= mean
+		
+    def power_dist(self, save=False):
+        
+        plot_power_distribution(self.spec, name=self.name+"_power_dist", save=save)
 
 def main(args):
 	

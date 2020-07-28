@@ -29,26 +29,27 @@ from . import spectrogram as sp
 from scipy.stats import expon
 import time
 
-def get_likelihood_vals(spec_in, t, f, track):
-    intensity_0 = track.get_signal(t, f)
+def get_likelihood_vals(spec_in, track):
+    intensity_0 = track.get_signal(spec_in.t, spec_in.f)
     probabilities = expon.pdf(spec_in.spec, loc=intensity_0)
     
     return np.log(np.maximum(probabilities, 1e-30))#1e-100))
 
-def get_likelihood(spec_in, t, f, track):
+def get_likelihood(spec_in, track):
     
-    return - np.sum(get_likelihood_vals(spec_in, t, f, track))
+    return - np.sum(get_likelihood_vals(spec_in, track))
     
-def plot_hypothesis(spec_in, t, f, track):
+def plot_hypothesis(spec_in, track):
 	
-	spectrogram_hypothesis = sp.Spectrogram.from_tracks(t, f, [track], add_noise=False)
+	spectrogram_hypothesis = sp.Spectrogram.from_tracks(spec_in.t, spec_in.f, 
+													[track], add_noise=False)
 	print('Track hypothesis')
 	spectrogram_hypothesis.plot()
 	
-	spec_out = get_likelihood_vals(spec_in, t, f, track)
+	spec_out = get_likelihood_vals(spec_in, track)
 	
 	print('Likelihood values')
-	sp.plot_spectrogram(spec_out, t, f)
+	sp.plot_spectrogram(spec_out, spec_in.t, spec_in.f)
     
 def scan_likelihood(scan_vals, likelihood_function):
     

@@ -39,7 +39,7 @@ def get_likelihood(spec_in, track):
     
     return - np.sum(get_likelihood_vals(spec_in, track))
     
-def plot_hypothesis(spec_in, track):
+def plot_hypothesis(spec_in, track, save=False):
 	
 	spectrogram_hypothesis = sp.Spectrogram.from_tracks(spec_in.t, spec_in.f, 
 													[track], add_noise=False)
@@ -49,7 +49,8 @@ def plot_hypothesis(spec_in, track):
 	spec_out = get_likelihood_vals(spec_in, track)
 	
 	print('Likelihood values')
-	sp.plot_spectrogram(spec_out, spec_in.t, spec_in.f)
+	sp.plot_spectrogram(spec_out, spec_in.t, spec_in.f, 
+								name=spec_in.name+'_likelihood_vals',save=save)
     
 def scan_likelihood(scan_vals, likelihood_function):
     

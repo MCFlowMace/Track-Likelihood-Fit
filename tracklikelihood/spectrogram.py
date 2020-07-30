@@ -34,24 +34,47 @@ def get_aspect(extent, shape):
     
     return x_res/y_res
     
-def plot_spectrogram(spec, t, f, name='spectrogram', save=False):
+def plot_spectrogram(spec, t, f, tracks=[], log_scale=False,#t_start, f_start, t_end, f_end,
+                                name='spectrogram', save=False):
 
-    fig, ax = plt.subplots()    
+    fig, ax = plt.subplots()  
+    
+    dt = t[1]-t[0]
+    df = f[1]-f[0]  
 
-    extent = [t[0], t[-1], f[0], f[-1]]
+    extent = [t[0], t[-1]+dt, f[0]-df/2, f[-1]+df/2]
     aspect = get_aspect(extent, spec.shape)
+    
+    data = np.transpose(spec)
+    
+    if log_scale:
+        data = np.log(data)
 
-    cmap = ax.imshow(np.transpose(spec), extent=extent, origin='lower', 
+    cmap = ax.imshow(data, extent=extent, origin='lower', 
                                                     aspect=aspect)
+                                            
+    for tr in tracks:
+        t_start = tr[0]
+        f_start = tr[1]
+        t_end = tr[2]
+        f_end = tr[3]
+        
+        f_track, _ = track.line_segment(t_start, t_end, f_start, f_end)
+    
+        t_probe = np.linspace(t_start, t_end, t.shape[0]*100)
+        f_probe = f_track(t_probe)
+        ax.plot(t_start, f_start, c='r', marker='x', markersize=2)
+        ax.plot(t_end, f_end, c='r', marker='x', markersize=2)
+        ax.plot(t_probe, f_probe, c='g', linewidth=1)
     
     cbar = fig.colorbar(cmap)
     cbar.set_label('Power')
     
-    ax.set_xlabel('t')
-    ax.set_ylabel('f')
+    ax.set_xlabel('t[s]')
+    ax.set_ylabel('f[Hz]')
 
     if save:
-        plt.savefig(name+'.png', dpi=1200)
+        plt.savefig(name+'.png', dpi=600)
 
     plt.show()
     
@@ -139,9 +162,10 @@ class Spectrogram:
 
         return cls(signal, t, f, name)
 		
-    def plot(self, save=False):
+    def plot(self, tracks=[], log_scale=False, save=False):
         
-        plot_spectrogram(self.spec, self.t, self.f, self.name, save)
+        plot_spectrogram(self.spec, self.t, self.f, 
+                                tracks, log_scale, self.name, save)
         
     def normalize(self):
 		

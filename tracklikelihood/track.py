@@ -104,13 +104,15 @@ class Track:
         
     def get_integration_region(self, x, y, dx, dy):
 	
-        ymin = y-dy/2
-        ymax = y+dy/2
-        xmin = x-dx/2
-        xmax = x+dx/2
+        ymin = y-dy#-dy/2
+        ymax = y+dy#/2
+        xmin = x#-dx/2
+        xmax = x+dx#/2
 
         xmax = np.minimum(xmax, self.t_end)
         xmin = np.maximum(xmin, self.t_start)
+        
+        #print(xmin[:,0], xmax[:,0])
 
         mu, _ = line_segment(self.t_start, self.t_end, self.f_start, self.f_end)
 
@@ -120,13 +122,17 @@ class Track:
         return ymin, ymax, mumin, mumax
         
     def get_signal(self, t, f):
+		
+        dt = (t[1]-t[0])
+        df = (f[1]-f[0])/2
 
         track_signal = np.zeros(shape=[t.shape[0], f.shape[0]])
+      #  track_signal = -100*track_signal
 
-        track_ind = (t>(self.t_start))&(t<(self.t_end))
+        track_ind = (t>(self.t_start-dt))&(t<self.t_end)
         
-        dt = t[1]-t[0]
-        df = f[1]-f[0]
+      #  first = np.argmax(t>self.t_start)
+      #  print(first, t[first])
 
         t_track = t[track_ind]
 
@@ -139,6 +145,7 @@ class Track:
         track_signal[track_ind] = integrate_bin(mumin, mumax, fmin, fmax, 
                                                             self.sigma, 
                                                             self.get_slope())  #gauss(ff, mu(tt), self.sigma)
+        
         track_signal[track_ind]/=dt*df
         
         return self.snr*track_signal

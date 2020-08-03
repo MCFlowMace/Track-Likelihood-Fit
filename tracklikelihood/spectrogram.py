@@ -34,7 +34,7 @@ def get_aspect(extent, shape):
     
     return x_res/y_res
     
-def plot_spectrogram(spec, t, f, tracks=[], log_scale=False,#t_start, f_start, t_end, f_end,
+def plot_spectrogram(spec, t, f, tracks=[], vscale='default', log_scale=False,
                                 name='spectrogram', save=False):
 
     fig, ax = plt.subplots()  
@@ -50,7 +50,15 @@ def plot_spectrogram(spec, t, f, tracks=[], log_scale=False,#t_start, f_start, t
     if log_scale:
         data = np.log(data)
 
-    cmap = ax.imshow(data, extent=extent, origin='lower', 
+    if vscale=='default':
+        vmin = np.nanmin(data[data != -np.inf])
+        vmax = np.max(data)
+    else:
+        print(vscale)
+        vmin = vscale[0]
+        vmax = vscale[1]
+    
+    cmap = ax.imshow(data, extent=extent, origin='lower', vmin=vmin, vmax=vmax, 
                                                     aspect=aspect)
                                             
     for tr in tracks:
@@ -162,10 +170,10 @@ class Spectrogram:
 
         return cls(signal, t, f, name)
 		
-    def plot(self, tracks=[], log_scale=False, save=False):
+    def plot(self, tracks=[], vscale='default', log_scale=False, save=False):
         
         plot_spectrogram(self.spec, self.t, self.f, 
-                                tracks, log_scale, self.name, save)
+                                tracks, vscale, log_scale, self.name, save)
         
     def normalize(self):
 		

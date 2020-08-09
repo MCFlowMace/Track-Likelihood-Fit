@@ -28,25 +28,33 @@ from . import track
 from . import spectrogram as sp
 from scipy.stats import expon
 import time
+from math import sqrt
+from scipy import special
 
-def get_likelihood_vals(spec_in, track):
+root2 = sqrt(2)
+
+def smooth_exp_pdf(x, x0, sigma):
+	sig2 = sigma**2
+	return 0.5*np.exp(0.5*sig2-(x-x0))*special.erf((sig2 -(x-x0))/(root2*sigma))
+
+def get_likelihood_vals(spec_in, track, pdf):
     intensity_0 = track.get_signal(spec_in.t, spec_in.f)
-    probabilities = expon.pdf(spec_in.spec, loc=intensity_0)
+    probabilities = pdf(spec_in.spec, intensity_0) # expon.pdf(spec_in.spec, loc=intensity_0)
     
     return np.log(np.maximum(probabilities, 1e-30))#1e-100))
 
-def get_likelihood(spec_in, track):
+def get_likelihood(spec_in, track, pdf):
     
-    return - np.sum(get_likelihood_vals(spec_in, track))
+    return - np.sum(get_likelihood_vals(spec_in, track, pdf))
     
-def plot_hypothesis(spec_in, track, save=False):
+def plot_hypothesis(spec_in, track, pdf, save=False):
 	
 	spectrogram_hypothesis = sp.Spectrogram.from_tracks(spec_in.t, spec_in.f, 
 													[track], add_noise=False)
 	print('Track hypothesis')
 	spectrogram_hypothesis.plot()
 	
-	spec_out = get_likelihood_vals(spec_in, track)
+	spec_out = get_likelihood_vals(spec_in, track, pdf)
 	
 	print('Likelihood values')
 	sp.plot_spectrogram(spec_out, spec_in.t, spec_in.f, 

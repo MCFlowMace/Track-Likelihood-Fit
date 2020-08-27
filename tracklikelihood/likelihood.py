@@ -35,7 +35,7 @@ root2 = sqrt(2)
 
 def smooth_exp_pdf(x, x0, sigma):
 	sig2 = sigma**2
-	return 0.5*np.exp(0.5*sig2-(x-x0))*special.erf((sig2 -(x-x0))/(root2*sigma))
+	return 0.5*np.exp(0.5*sig2-(x-x0))*special.erfc((sig2 -(x-x0))/(root2*sigma))
 
 def get_likelihood_vals(spec_in, track, pdf):
     intensity_0 = track.get_signal(spec_in.t, spec_in.f)

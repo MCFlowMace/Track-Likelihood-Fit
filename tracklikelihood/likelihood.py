@@ -37,15 +37,15 @@ def smooth_exp_pdf(x, x0, sigma):
 	sig2 = sigma**2
 	return 0.5*np.exp(0.5*sig2-(x-x0))*special.erfc((sig2 -(x-x0))/(root2*sigma))
 
-def get_likelihood_vals(spec_in, track, pdf):
-    intensity_0 = track.get_signal(spec_in.t, spec_in.f)
+def get_likelihood_vals(spec_in, track, pdf,  N, BW):
+    intensity_0 = track.get_signal(spec_in.t, spec_in.f,  N, BW)
     probabilities = pdf(spec_in.spec, intensity_0) # expon.pdf(spec_in.spec, loc=intensity_0)
     
     return np.log(np.maximum(probabilities, 1e-30))#1e-100))
 
-def get_likelihood(spec_in, track, pdf):
+def get_likelihood(spec_in, track, pdf, N, BW):
     
-    return - np.sum(get_likelihood_vals(spec_in, track, pdf))
+    return - np.sum(get_likelihood_vals(spec_in, track, pdf,  N, BW))
     
 def plot_hypothesis(spec_in, track, pdf, save=False):
 	

@@ -83,6 +83,10 @@ def rect_spectrum(f, M):
 
 def f_frac(f, SR):
     return f/SR
+    
+def correct_ends():
+	
+	return
 
 class Track:
 
@@ -162,6 +166,30 @@ class Track:
         mean_f = (mumax+mumin)/2
 
         track_signal[track_ind] = rect_spectrum((ff-mean_f)/BW, N)
+        
+        #find timebin of start inside first time slice
+        t_first_bin = np.linspace(t_track[0], t_track[1], N, endpoint=False) 
+        t_bin_start = np.argmax(t_first_bin>self.t_start) #first bin with signal
+        
+        #number of timebins that the signal exists in first timeslice/pixel
+        N_start = N - t_bin_start
+        
+        #find timebin of end inside last time slice
+        t_first_bin = np.linspace(t_track[-1], t_track[-1]+dt, N, endpoint=False) 
+        print(self.t_end, t_first_bin)
+        t_bin_start = np.argmax(t_first_bin>self.t_end) #first bin without signal
+        
+        #number of timebins that the signal exists in last timeslice/pixel
+        N_end = t_bin_start
+        
+        first_bin = np.argmax(track_ind)
+        last_bin = track_ind.shape[0] - np.argmax(track_ind[::-1]) -1
+        
+        print(N_end, first_bin, last_bin)
+        print(track_ind)
+        
+        track_signal[first_bin] = rect_spectrum((ff[0]-mean_f[0])/BW, N_start)
+        track_signal[last_bin] = rect_spectrum((ff[-1]-mean_f[-1])/BW, N_end)
 
         #t_in0 = t_track[1]-self.t_start
         #t_in1 = self.t_end-t_track[-1]

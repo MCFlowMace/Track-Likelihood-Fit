@@ -54,7 +54,6 @@ def plot_spectrogram(spec, t, f, tracks=[], vscale='default', log_scale=False,
         vmin = np.nanmin(data[data != -np.inf])
         vmax = np.max(data)
     else:
-        print(vscale)
         vmin = vscale[0]
         vmax = vscale[1]
 

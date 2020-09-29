@@ -24,7 +24,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from . import track
+from . import track as tr
 from . import spectrogram as sp
 from scipy.stats import expon
 import time
@@ -145,32 +145,89 @@ def scan_and_plot_2d(lh_func, x_min, x_max, dx, x_real, y_min, y_max, dy, y_real
     plot_likelihood_2d(scan_vals_x, scan_vals_y, lh_np, x_real, y_real,
                                             x_label, y_label, min_ind, name)
 
-def scan_full_likelihood(lh_func, initial_guess, step_sizes, n_steps):
+def scan_full_likelihood(lh_func, vals_np):
 
-    lh = np.empty(shape=n_steps)
-
-    start = initial_guess-n_steps/2*step_sizes
-    stop = initial_guess+n_steps/2*step_sizes
-
-    vals = []
-    for i in range(start.shape[0]):
-        vals.append(np.arange(start[i], stop[i], step_sizes[i]))
-
-    vals_np = np.stack(np.meshgrid(*vals, indexing='ij'), -1)
-    print(vals_np.shape)
-    vals_np = np.rollaxis(vals_np, -1, 0)
-    print(vals_np.shape)
-
-    lh = lh_func(*vals_np)
-    print(vals[0].shape, vals[1].shape, vals[2].shape, vals[3].shape)
+    lh = np.empty(shape=vals_np.shape[:-1])
     print(lh.shape)
+
+    it = np.nditer(lh, flags=['multi_index'], op_flags=['writeonly'])
+    while not it.finished:
+        it[0] = lh_func(*vals_np[it.multi_index])
+        it.iternext()
 
     return lh
 
-#def find_likelihood_result():
+def define_scan_region(initial_guess, ranges, n_steps):
 
+    start = initial_guess-ranges
+    stop = initial_guess+ranges
 
+    vals = []
+    for i in range(start.shape[0]):
+        vals.append(np.linspace(start[i], stop[i], n_steps[i]))
 
+    vals_np = np.stack(np.meshgrid(*vals, indexing='ij'), -1)
+
+    print(vals_np.shape)
+
+    return vals_np
+
+def find_lh_min(lh_func, initial_guess, ranges, n_steps):
+
+    vals_np = define_scan_region(initial_guess, ranges, n_steps)
+
+    lh = scan_full_likelihood(lh_func, vals_np)
+
+    min_ind = np.unravel_index(lh.argmin(), lh.shape)
+    min_val = lh[min_ind]
+    threshold = min_val + 0.5
+    confidence_ind = lh<threshold
+
+    confidence_region = vals_np[confidence_ind]
+
+    opt = vals_np[min_ind]
+
+    return opt, confidence_region, lh, min_ind
+
+def inspect_hypothesis(hypothesis, spec_py, N, BW):
+
+    t_val, f_val, s_val, length_val, snr_val = hypothesis
+
+    t_end = t_val + length_val
+    f_end = f_val + s_val*length_val
+
+    sigma = 1
+
+    track_hypothesis = tr.Track.from_slope_and_length(t_val, f_val, s_val, length_val, sigma, snr_val)
+
+    spec_hypothesis = sp.Spectrogram.from_tracks(spec_py.t, spec_py.f, [track_hypothesis], N, BW, name='hypothesis',add_noise=False)
+
+    print('Track hypothesis')
+    #spec_hypothesis.normalize()
+    spec_hypothesis.plot()
+
+    print('Likelihood values')
+    lh_vals= get_likelihood_vals(spec_py, track_hypothesis, expon.pdf, N, BW)
+    sp.plot_spectrogram(lh_vals, spec_py.t, spec_py.f, name=spec_py.name+'_likelihood_vals',save=True)
+
+    #plots for same scale
+    print("Plot both on same scale")
+    maximum = np.max(spec_py.spec)
+    minimum = np.min(spec_py.spec)
+    minimum = min(minimum, np.min(spec_hypothesis.spec))
+    maximum = max(maximum, np.max(spec_hypothesis.spec))
+    print("Original spectrogram")
+    spec_py.plot(tracks=[[t_val, f_val, t_end, f_end]], save=True, vscale=[minimum, maximum])
+
+    print("Spectrogram of hypothesis")
+    spec_hypothesis.plot(tracks=[[t_val, f_val, t_end, f_end]], save=True, vscale=[minimum, maximum])
+
+    print("Difference spectra")
+    spec_diff = sp.Spectrogram(spec_py.spec-spec_hypothesis.spec, spec_py.t, spec_py.f, name='difference')
+    spec_diff.plot(save=True)
+
+    lh_start = get_likelihood(spec_py, track_hypothesis, expon.pdf, N, BW)
+    print("initial llh: ", lh_start)
 
 def main(args):
     return 0

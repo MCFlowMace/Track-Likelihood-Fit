@@ -24,12 +24,14 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 from . import track as tr
 from . import spectrogram as sp
 from scipy.stats import expon
 import time
 from math import sqrt
 from scipy import special
+import seaborn as sns
 
 root2 = sqrt(2)
 
@@ -47,7 +49,7 @@ def get_likelihood_vals(spec_in, track, pdf,  N, BW):
     probabilities = pdf(spec_in.spec, intensity_0) # expon.pdf(spec_in.spec, loc=intensity_0)
     #print(probabilities[round_ind])
 
-    return np.log(np.maximum(probabilities, 1e-30))#1e-100))
+    return np.log(np.maximum(probabilities, 1e-100))#1e-100))
 
 def get_likelihood(spec_in, track, pdf, N, BW):
 
@@ -208,7 +210,7 @@ def inspect_hypothesis(hypothesis, spec_py, N, BW):
 
     print('Likelihood values')
     lh_vals= get_likelihood_vals(spec_py, track_hypothesis, expon.pdf, N, BW)
-    sp.plot_spectrogram(lh_vals, spec_py.t, spec_py.f, name=spec_py.name+'_likelihood_vals',save=True)
+    sp.plot_spectrogram(lh_vals, spec_py.t, spec_py.f, cmap_in=sns.color_palette("vlag", as_cmap=True), name=spec_py.name+'_likelihood_vals',save=True)
 
     #plots for same scale
     print("Plot both on same scale")
@@ -223,11 +225,16 @@ def inspect_hypothesis(hypothesis, spec_py, N, BW):
     spec_hypothesis.plot(tracks=[[t_val, f_val, t_end, f_end]], save=True, vscale=[minimum, maximum])
 
     print("Difference spectra")
+    
+    #sns.set()
     spec_diff = sp.Spectrogram(spec_py.spec-spec_hypothesis.spec, spec_py.t, spec_py.f, name='difference')
-    spec_diff.plot(save=True)
+    spec_diff.plot(save=True, cmap_in=sns.color_palette("vlag", as_cmap=True))
+    #matplotlib.rc_file_defaults()
 
     lh_start = get_likelihood(spec_py, track_hypothesis, expon.pdf, N, BW)
     print("initial llh: ", lh_start)
+    
+    return lh_start
 
 def main(args):
     return 0

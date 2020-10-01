@@ -202,10 +202,8 @@ class Track:
         #track_signal[track_ind[-1]] *= t_in1/dt
 
         signal = self.snr*track_signal
-        #mean_sig = np.mean(signal)
 
-        #print(self.snr/mean_sig)
-        return signal #/mean_sig
+        return signal
 
     @classmethod
     def from_slope_and_length(cls, t_start, f_start, slope, length, sigma, snr):

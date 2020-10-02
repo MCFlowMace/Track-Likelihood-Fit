@@ -193,12 +193,10 @@ def find_lh_min(lh_func, initial_guess, ranges, n_steps):
 
 def inspect_hypothesis(hypothesis, spec_py, N, BW):
 
-    t_val, f_val, s_val, length_val, snr_val = hypothesis
+    t_val, f_val, s_val, length_val, snr_val, sigma = hypothesis
 
     t_end = t_val + length_val
     f_end = f_val + s_val*length_val
-
-    sigma = 1
 
     track_hypothesis = tr.Track.from_slope_and_length(t_val, f_val, s_val, length_val, sigma, snr_val)
 
@@ -225,7 +223,7 @@ def inspect_hypothesis(hypothesis, spec_py, N, BW):
     spec_hypothesis.plot(tracks=[[t_val, f_val, t_end, f_end]], save=True, vscale=[minimum, maximum])
 
     print("Difference spectra")
-    
+
     #sns.set()
     spec_diff = sp.Spectrogram(spec_py.spec-spec_hypothesis.spec, spec_py.t, spec_py.f, name='difference')
     spec_diff.plot(save=True, cmap_in=sns.color_palette("vlag", as_cmap=True))
@@ -233,7 +231,7 @@ def inspect_hypothesis(hypothesis, spec_py, N, BW):
 
     lh_start = get_likelihood(spec_py, track_hypothesis, expon.pdf, N, BW)
     print("initial llh: ", lh_start)
-    
+
     return lh_start
 
 def main(args):

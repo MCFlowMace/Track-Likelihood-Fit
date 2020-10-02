@@ -72,12 +72,17 @@ def integrate_bin(mumin, mumax, ymin, ymax, sigma, slope):
                     - exp_erf_cont(ymax, mumax, sigma) \
                     - exp_erf_cont(ymin, mumin, sigma))
 
-def rect_spectrum(f, M):
+def rect_spectrum(f, M, delta_cutoff):
 
     res = np.zeros(f.shape)
 
-    res[f==0] = M
-    res[f!=0] = np.sin(np.pi*f[f!=0]*M/2)/np.sin(np.pi*f[f!=0])
+    center_ind = f==0
+    outer_ind = np.abs(f)>delta_cutoff
+    inner_ind = (center_ind^True)&(outer_ind^True) #not center and not outer
+
+    res[center_ind] = M #f==0
+    res[inner_ind] = np.sin(np.pi*f[inner_ind]*M/2)/np.sin(np.pi*f[inner_ind]) #f!=0
+    #res[outer_ind] = 0
 
     return res**2
 
@@ -153,6 +158,8 @@ class Track:
 
         ff, tt = np.meshgrid(f, t_track)
 
+       # print(ff)
+
         fmin, fmax, mumin, mumax = self.get_integration_region(tt, ff, dt, df)
 
         #mu, _ = line_segment(self.t_start, self.t_end, self.f_start, self.f_end)
@@ -165,7 +172,9 @@ class Track:
 
         mean_f = (mumax+mumin)/2
 
-        track_signal[track_ind] = rect_spectrum((ff-mean_f)/BW, N)
+      #  print(mean_f)
+
+        track_signal[track_ind] = rect_spectrum((ff-mean_f)/BW, N, self.sigma/BW)
 
         #find timebin of start inside first time slice
         t_first_bin = np.linspace(t_track[0], t_track[1], N, endpoint=False)
@@ -190,8 +199,8 @@ class Track:
         #print(N_end, first_bin, last_bin)
         #print(track_ind)
 
-        track_signal[first_bin] = rect_spectrum((ff[0]-mean_f[0])/BW, N_start)
-        track_signal[last_bin] = rect_spectrum((ff[-1]-mean_f[-1])/BW, N_end)
+        track_signal[first_bin] = rect_spectrum((ff[0]-mean_f[0])/BW, N_start, self.sigma/BW)
+        track_signal[last_bin] = rect_spectrum((ff[-1]-mean_f[-1])/BW, N_end, self.sigma/BW)
 
         #t_in0 = t_track[1]-self.t_start
         #t_in1 = self.t_end-t_track[-1]
